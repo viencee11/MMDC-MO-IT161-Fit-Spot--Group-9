@@ -213,7 +213,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'btn-book';
-            if (slot.my_status !== null) {
+            if (!slot.has_schedule) {
+                button.disabled = true;
+                button.textContent = 'Schedule Unavailable';
+            } else if (slot.my_status !== null) {
                 button.disabled = true;
                 button.textContent = 'Booked';
             } else if (slot.remaining <= 0) {
