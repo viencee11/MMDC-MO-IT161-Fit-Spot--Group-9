@@ -13,10 +13,25 @@ endpoint(function () {
     if ($method === 'GET') {
         if (isset($_GET['upcoming'])) {
             $user = current_user();
+            $memberPlan = null;
+            if ($user !== null && $user['role'] === 'member') {
+                $stmt = db()->prepare(
+                    "SELECT p.name
+                       FROM memberships m
+                       JOIN membership_plans p ON p.id = m.plan_id
+                      WHERE m.user_id = ?
+                        AND m.status = 'active'
+                        AND m.end_date >= CURDATE()
+                      ORDER BY m.end_date DESC, m.id DESC
+                      LIMIT 1"
+                );
+                $stmt->execute([(int) $user['id']]);
+                $memberPlan = $stmt->fetchColumn() ?: null;
+            }
 
             $rows = db()->query(
                 "SELECT s.id AS schedule_id, c.id AS class_id, c.name, c.description,
-                        s.schedule_date, s.start_time, s.end_time, s.capacity,
+                        s.schedule_date, s.start_time, s.end_time, s.capacity, s.required_plan,
                         (SELECT COUNT(*) FROM bookings b
                           WHERE b.schedule_id = s.id
                             AND b.status IN ('pending', 'confirmed')) AS booked
@@ -46,6 +61,12 @@ endpoint(function () {
 
             $result = [];
             foreach ($rows as $row) {
+                $requiredPlan = $row['required_plan'] ?: 'Basic';
+                $isGroupClass = $requiredPlan === 'Premium';
+                if ($user !== null && $user['role'] === 'member' && $requiredPlan !== $memberPlan) {
+                    continue;
+                }
+
                 $booked = (int) $row['booked'];
                 $hasSchedule = $row['schedule_id'] !== null;
                 $capacity = $hasSchedule ? (int) $row['capacity'] : 0;
@@ -62,6 +83,8 @@ endpoint(function () {
                     'class_id'     => (int) $row['class_id'],
                     'name'         => $row['name'],
                     'description'  => $row['description'],
+                    'is_group_class' => $isGroupClass,
+                    'required_plan' => $requiredPlan,
                     'schedule'     => $hasSchedule
                         ? schedule_label($row['schedule_date'], $row['start_time'], $row['end_time'])
                         : 'No upcoming schedule',
