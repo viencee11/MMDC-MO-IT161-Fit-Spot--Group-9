@@ -1,6 +1,9 @@
 # FitSpot MySQL Database
 
 This folder contains the database setup used by the FitSpot PHP API.
+The complete schema and seed data are available in [`fitspot.sql`](fitspot.sql),
+including the schedule membership category used to restrict Basic and Premium
+schedules.
 
 ## Import the database
 
@@ -10,6 +13,9 @@ the project root:
 ```powershell
 mysql -u root < Database/MySQL/fitspot.sql
 ```
+
+The combined dump includes the `class_schedules.required_plan` column. Use
+`Basic` for Basic schedules and `Premium` for Premium schedules.
 
 The SQL file creates and selects the `fitspot` database automatically. If the
 local MySQL server uses a password, add `-p`:
