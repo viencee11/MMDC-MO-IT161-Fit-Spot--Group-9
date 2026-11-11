@@ -200,8 +200,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             card.dataset.className = slot.name;
             card.dataset.description = slot.description || '';
             card.innerHTML = '<div class="class-card-head"><h3>' + esc(slot.name) +
-                '</h3><span class="badge ' + slot.badge_color + '">' + esc(slot.badge_label) +
-                '</span></div><p class="class-desc">' + esc(slot.description || '') +
+                '</h3><div class="class-card-badges">' +
+                (slot.is_group_class ? '<span class="badge badge-orange">Group Class</span>' : '') +
+                '<span class="badge ' + slot.badge_color + '">' + esc(slot.badge_label) +
+                '</span></div></div><p class="class-desc">' + esc(slot.description || '') +
                 '</p><p class="class-schedule">' + esc(slot.schedule) +
                 '</p><div class="slot-cell"><span class="slot-text">' + slot.remaining +
                 ' slots available (' + slot.booked + ' of ' + slot.capacity +
@@ -516,6 +518,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             const card = button.closest('.plan-card');
             if (!card) return;
+
+            const planName = card.dataset.plan || 'this plan';
+            const confirmed = await confirmDialog(
+                'Confirm Plan Switch',
+                'Are you sure you want to switch to the ' + planName + ' plan?',
+                'Switch Plan'
+            );
+            if (!confirmed) return;
 
             button.disabled = true;
             const originalText = button.textContent;
