@@ -58,6 +58,17 @@
                     <button type="button" data-add="schedule">+ Add Schedule</button>
                 </div>
 
+                <div class="admin-filters" role="search" aria-label="Filter schedules by membership">
+                    <label class="table-filter" for="schedule-plan-filter">
+                        Membership:
+                        <select id="schedule-plan-filter">
+                            <option value="all">All plans</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Premium">Premium</option>
+                        </select>
+                    </label>
+                </div>
+
                 <div class="table-card">
                     <table data-entity="schedule">
                         <thead>
