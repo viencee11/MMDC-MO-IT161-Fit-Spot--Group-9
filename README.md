@@ -77,7 +77,7 @@ Replace `192.168.1.25` with the actual IPv4 address shown on the computer. If Wi
 - Confirmation popups protect admin reservation confirmations, deletions, and logout actions
 - Success and error feedback appears through side toast notifications instead of inline alert banners
 - Monitor available slots to avoid overbooking
-- Notification bell shows members confirmed bookings and alerts administrators about new bookings and schedules with near-empty slots
+- Notification bell shows members confirmed bookings and alerts administrators about new bookings and schedules with near-empty or fully booked slots
 
 ## Benefits
 
