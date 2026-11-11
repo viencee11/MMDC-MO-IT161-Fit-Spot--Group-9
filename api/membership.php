@@ -1,26 +1,33 @@
 <?php
 require __DIR__ . '/db.php';
 
-/* POST { member_id, plan_id } -> assign or renew a member plan (admin) */
+/* POST { plan_id } -> switch the current member's plan
+   POST { member_id, plan_id } -> assign or renew a member plan (admin) */
 
 endpoint(function () {
     if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
         fail('Method not allowed.', 405);
     }
 
-    require_user('admin');
+    $user = require_user();
     $input = json_in();
-    $memberId = (int) ($input['member_id'] ?? 0);
     $planId = (int) ($input['plan_id'] ?? 0);
+    $memberId = $user['role'] === 'admin'
+        ? (int) ($input['member_id'] ?? 0)
+        : (int) $user['id'];
 
     if (!$memberId || !$planId) {
-        fail('Member id and plan id are required.');
+        fail($user['role'] === 'admin'
+            ? 'Member id and plan id are required.'
+            : 'Plan id is required.');
     }
 
-    $stmt = db()->prepare("SELECT id FROM users WHERE id = ? AND role = 'member'");
-    $stmt->execute([$memberId]);
-    if (!$stmt->fetch()) {
-        fail('Member not found.', 404);
+    if ($user['role'] === 'admin') {
+        $stmt = db()->prepare("SELECT id FROM users WHERE id = ? AND role = 'member'");
+        $stmt->execute([$memberId]);
+        if (!$stmt->fetch()) {
+            fail('Member not found.', 404);
+        }
     }
 
     $stmt = db()->prepare(
@@ -36,7 +43,7 @@ endpoint(function () {
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare(
-            "SELECT id
+            "SELECT id, plan_id
                FROM memberships
               WHERE user_id = ?
                 AND status = 'active'
@@ -46,9 +53,14 @@ endpoint(function () {
               FOR UPDATE"
         );
         $stmt->execute([$memberId]);
-        if ($stmt->fetch()) {
+        $activeMembership = $stmt->fetch();
+        if ($activeMembership && $user['role'] === 'admin') {
             $pdo->rollBack();
             fail('This member already has an active plan. It can be changed after expiry or at renewal.', 409);
+        }
+        if ($activeMembership && (int) $activeMembership['plan_id'] === $planId) {
+            $pdo->commit();
+            json_out(['plan' => $plan['name'], 'plan_id' => $planId]);
         }
 
         $stmt = $pdo->prepare(
