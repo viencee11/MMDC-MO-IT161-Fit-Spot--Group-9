@@ -122,7 +122,7 @@ endpoint(function () {
         }
 
         $stmt = $pdo->prepare(
-            'SELECT id, schedule_date, start_time, capacity, status
+            'SELECT id, schedule_date, start_time, capacity, required_plan, status
                FROM class_schedules WHERE id = ? FOR UPDATE'
         );
         $stmt->execute([$scheduleId]);
@@ -134,6 +134,24 @@ endpoint(function () {
         if ($schedule['status'] === 'cancelled') {
             $pdo->rollBack();
             fail('That class has been cancelled.', 409);
+        }
+
+        if (in_array($schedule['required_plan'], ['Basic', 'Premium'], true)) {
+            $stmt = $pdo->prepare(
+                "SELECT p.name
+                   FROM memberships m
+                   JOIN membership_plans p ON p.id = m.plan_id
+                  WHERE m.user_id = ?
+                    AND m.status = 'active'
+                    AND m.end_date >= CURDATE()
+                    AND p.name = 'Premium'
+                  LIMIT 1"
+            );
+            $stmt->execute([(int) $user['id']]);
+            if ($stmt->fetchColumn() !== $schedule['required_plan']) {
+                $pdo->rollBack();
+                fail('A ' . $schedule['required_plan'] . ' membership is required to book this schedule.', 403);
+            }
         }
 
         $startsAt = new DateTime($schedule['schedule_date'] . ' ' . $schedule['start_time']);
