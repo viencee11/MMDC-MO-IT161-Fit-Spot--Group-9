@@ -190,6 +190,14 @@
     gap: 10px;
 }
 
+.class-card-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
 .class-card h3 {
     margin: 0;
     color: #0f172a;
