@@ -15,15 +15,17 @@ endpoint(function () {
             $user = current_user();
 
             $rows = db()->query(
-                "SELECT s.id AS schedule_id, s.class_id, c.name, c.description,
+                "SELECT s.id AS schedule_id, c.id AS class_id, c.name, c.description,
                         s.schedule_date, s.start_time, s.end_time, s.capacity,
                         (SELECT COUNT(*) FROM bookings b
                           WHERE b.schedule_id = s.id
                             AND b.status IN ('pending', 'confirmed')) AS booked
-                   FROM class_schedules s
-                   JOIN fitness_classes c ON c.id = s.class_id
-                  WHERE s.schedule_date >= CURDATE()
+                   FROM fitness_classes c
+              LEFT JOIN class_schedules s
+                     ON s.class_id = c.id
+                    AND s.schedule_date >= CURDATE()
                     AND s.status <> 'cancelled'
+                  WHERE c.is_active = 1
                   ORDER BY s.schedule_date, s.start_time"
             )->fetchAll();
 
@@ -45,24 +47,30 @@ endpoint(function () {
             $result = [];
             foreach ($rows as $row) {
                 $booked = (int) $row['booked'];
-                $capacity = (int) $row['capacity'];
-                $scheduleId = (int) $row['schedule_id'];
+                $hasSchedule = $row['schedule_id'] !== null;
+                $capacity = $hasSchedule ? (int) $row['capacity'] : 0;
+                $scheduleId = $hasSchedule ? (int) $row['schedule_id'] : 0;
                 $myStatus = $mine[$scheduleId] ?? null;
-                $badge = $myStatus !== null
+                $badge = !$hasSchedule
+                    ? ['No schedule', 'badge-gray']
+                    : ($myStatus !== null
                     ? status_badge($myStatus)
-                    : ($booked >= $capacity ? ['Full', 'badge-red'] : ['Open', 'badge-green']);
+                    : ($booked >= $capacity ? ['Full', 'badge-red'] : ['Open', 'badge-green']));
 
                 $result[] = [
                     'schedule_id'  => $scheduleId,
                     'class_id'     => (int) $row['class_id'],
                     'name'         => $row['name'],
                     'description'  => $row['description'],
-                    'schedule'     => schedule_label($row['schedule_date'], $row['start_time'], $row['end_time']),
+                    'schedule'     => $hasSchedule
+                        ? schedule_label($row['schedule_date'], $row['start_time'], $row['end_time'])
+                        : 'No upcoming schedule',
                     'date'         => $row['schedule_date'],
                     'booked'       => $booked,
                     'capacity'     => $capacity,
-                    'remaining'    => max(0, $capacity - $booked),
+                    'remaining'    => $hasSchedule ? max(0, $capacity - $booked) : 0,
                     'my_status'    => $myStatus,
+                    'has_schedule' => $hasSchedule,
                     'badge_label'  => $badge[0],
                     'badge_color'  => $badge[1],
                 ];
