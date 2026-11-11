@@ -262,6 +262,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    let schedulesRefreshTimer = null;
+
     async function loadSchedules() {
         const tbody = document.getElementById('tbody-schedules');
         if (!tbody) return;
@@ -273,7 +275,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                     '<td>' + esc(slot.class_name) + '</td>' +
                     '<td>' + esc(slot.schedule) + '</td>' +
                     '<td class="slot-cell">' +
-                        '<span class="slot-text">' + slot.booked + ' of ' + slot.capacity + ' booked</span>' +
+                        '<span class="slot-text">' + slot.remaining + ' slots available (' +
+                            slot.booked + ' of ' + slot.capacity + ' booked)</span>' +
                         '<div class="slot-bar' + (slot.percent >= 100 ? ' is-full' : '') + '">' +
                             '<span style="width: ' + slot.percent + '%;"></span>' +
                         '</div>' +
@@ -287,6 +290,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     '</td>' +
                     '</tr>';
             });
+            if (schedulesRefreshTimer === null) {
+                schedulesRefreshTimer = window.setInterval(loadSchedules, 10000);
+            }
         } catch (error) {
             errorRow(tbody, 5, friendlyMessage(error, 'Unable to load schedules.', SERVER_HINT));
         }
