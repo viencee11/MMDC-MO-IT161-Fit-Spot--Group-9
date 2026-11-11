@@ -251,16 +251,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             card.classList.toggle('is-current', isCurrent);
             if (tag) tag.hidden = !isCurrent;
             if (choose) {
-                const active = Boolean(profile && profile.membership
-                    && profile.membership.status === 'active');
                 choose.hidden = false;
-                choose.disabled = true;
-                choose.textContent = isCurrent
-                    ? 'Current Plan'
-                    : (active ? 'Unavailable until renewal' : 'Admin assignment only');
-                choose.title = active
-                    ? 'This plan is unavailable until your current membership expires'
-                    : 'Only an administrator can assign a membership plan';
+                choose.disabled = isCurrent;
+                choose.textContent = isCurrent ? 'Current Plan' : 'Switch Plan';
+                choose.title = isCurrent ? 'You are currently subscribed to this plan' : 'Switch to this membership plan';
             }
         });
 
@@ -524,15 +518,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!card) return;
 
             button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = 'Switching...';
+            button.setAttribute('aria-busy', 'true');
 
             try {
                 const result = await apiCall('POST', 'membership.php', {
                     plan_id: Number(button.dataset.planId)
                 });
+                await loadProfile();
+                applyPlan();
                 toast.success('Your membership is now the ' + result.plan + '.');
-                await loadPlansPage();
             } catch (error) {
                 button.disabled = false;
+                button.textContent = originalText;
+                button.removeAttribute('aria-busy');
                 toast.error(friendlyMessage(error, 'Unable to complete your request.'));
             }
         });
