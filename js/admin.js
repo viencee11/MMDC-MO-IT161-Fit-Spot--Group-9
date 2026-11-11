@@ -680,6 +680,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             row.querySelectorAll('[data-confirm], [data-cancel]').forEach(function (button) {
                 button.disabled = true;
             });
+            if (action === 'cancel') {
+                await loadSchedules();
+            }
         } catch (error) {
             toast.error(friendlyMessage(error, 'Unable to complete your request.'));
         }
