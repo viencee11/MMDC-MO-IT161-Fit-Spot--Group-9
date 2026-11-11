@@ -16,7 +16,11 @@ endpoint(function () {
                FROM memberships m
                JOIN membership_plans p ON p.id = m.plan_id
               WHERE m.user_id = ?
-              ORDER BY m.end_date DESC LIMIT 1"
+               ORDER BY
+                 (m.status = 'active' AND m.end_date >= CURDATE()) DESC,
+                 m.end_date DESC,
+                 m.id DESC
+               LIMIT 1"
         );
         $stmt->execute([(int) $user['id']]);
         $membership = $stmt->fetch();
