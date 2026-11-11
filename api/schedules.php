@@ -18,7 +18,7 @@ endpoint(function () {
         if ($isAdmin) {
             $rows = db()->query(
                 "SELECT s.id AS schedule_id, s.class_id, c.name AS class_name,
-                        s.schedule_date, s.start_time, s.end_time, s.capacity, s.status,
+                        s.schedule_date, s.start_time, s.end_time, s.capacity, s.required_plan, s.status,
                         (SELECT COUNT(*) FROM bookings b
                           WHERE b.schedule_id = s.id
                             AND b.status IN ('pending', 'confirmed')) AS booked
@@ -29,7 +29,7 @@ endpoint(function () {
         } else {
             $rows = db()->query(
                 "SELECT s.id AS schedule_id, s.class_id, c.name AS class_name,
-                        s.schedule_date, s.start_time, s.end_time, s.capacity, s.status,
+                        s.schedule_date, s.start_time, s.end_time, s.capacity, s.required_plan, s.status,
                         (SELECT COUNT(*) FROM bookings b
                           WHERE b.schedule_id = s.id
                             AND b.status IN ('pending', 'confirmed')) AS booked
@@ -53,6 +53,7 @@ endpoint(function () {
                 'schedule'    => schedule_label($row['schedule_date'], $row['start_time'], $row['end_time']),
                 'booked'      => $booked,
                 'capacity'    => $capacity,
+                'required_plan' => $row['required_plan'],
                 'remaining'   => max(0, $capacity - $booked),
                 'percent'     => $capacity > 0 ? min(100, (int) round($booked / $capacity * 100)) : 0,
                 'status'      => $row['status'],
@@ -100,6 +101,7 @@ endpoint(function () {
         $start = post_value($input, 'start_time');
         $end = post_value($input, 'end_time');
         $capacity = post_value($input, 'capacity');
+        $requiredPlan = post_value($input, 'required_plan');
 
         if (!$classId) {
             fail('Please choose a class.');
@@ -116,12 +118,16 @@ endpoint(function () {
         if (!ctype_digit($capacity) || (int) $capacity < 1) {
             fail('Capacity must be at least 1.');
         }
+        if (!in_array($requiredPlan, ['Basic', 'Premium'], true)) {
+            fail('Please choose a valid membership category.');
+        }
 
         $stmt = db()->prepare(
-            'INSERT INTO class_schedules (class_id, schedule_date, start_time, end_time, capacity)
-             VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO class_schedules
+                (class_id, schedule_date, start_time, end_time, capacity, required_plan)
+             VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$classId, $date, $start, $end, (int) $capacity]);
+        $stmt->execute([$classId, $date, $start, $end, (int) $capacity, $requiredPlan]);
 
         json_out(['id' => (int) db()->lastInsertId()], 201);
     }
