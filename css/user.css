@@ -4,6 +4,21 @@
     background-color: #f5f7fa;
 }
 
+.user-body .admin-content {
+    padding: 15px;
+}
+
+.user-body #view-classes > .section-head {
+    min-height: 102px;
+    margin-bottom: 20px;
+    padding: 24px 26px;
+    border-radius: 16px;
+}
+
+.user-body #view-classes > .section-head p {
+    color: #3f6798;
+}
+
 .stat-value.is-text {
     font-size: 24px;
 }
@@ -159,6 +174,10 @@
 
 .class-filters input {
     min-width: 260px;
+}
+
+.class-filters select {
+    width: 136px;
 }
 
 .class-grid {
