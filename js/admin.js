@@ -180,6 +180,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     const tablePages = {};
+    let scheduleRows = [];
+    let memberRows = [];
 
     function renderTablePage(key, tbody, items, colspan, renderer) {
         let controls = tbody.parentElement.parentElement.nextElementSibling;
@@ -270,7 +272,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         try {
             const data = await apiCall('GET', 'schedules.php?all=1');
-            renderTablePage('schedules', tbody, data.schedules, 6, function (slot) {
+            scheduleRows = data.schedules;
+            const filter = document.getElementById('schedule-plan-filter');
+            const selectedPlan = filter ? filter.value : 'all';
+            const filteredRows = selectedPlan === 'all'
+                ? scheduleRows
+                : scheduleRows.filter(function (slot) { return slot.required_plan === selectedPlan; });
+            renderTablePage('schedules', tbody, filteredRows, 6, function (slot) {
                 return '<tr data-id="' + slot.schedule_id + '">' +
                     '<td>' + esc(slot.class_name) + '</td>' +
                     '<td>' + esc(slot.schedule) + '</td>' +
@@ -305,7 +313,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         try {
             const data = await apiCall('GET', 'members.php');
-            renderTablePage('members', tbody, data.members, 5, function (member) {
+            memberRows = data.members;
+            const filter = document.getElementById('member-plan-filter');
+            const selectedPlan = filter ? filter.value : 'all';
+            const filteredRows = selectedPlan === 'all'
+                ? memberRows
+                : memberRows.filter(function (member) { return member.plan === selectedPlan; });
+            renderTablePage('members', tbody, filteredRows, 5, function (member) {
                 return '<tr data-id="' + member.id + '">' +
                     '<td>' + esc(member.full_name) + '</td>' +
                     '<td>' + esc(member.email) + '</td>' +
@@ -322,6 +336,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             errorRow(tbody, 5, friendlyMessage(error, 'Unable to load members.', SERVER_HINT));
         }
+
     }
 
     async function loadReservations() {
@@ -346,6 +361,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             errorRow(tbody, 5, friendlyMessage(error, 'Unable to load reservations.', SERVER_HINT));
         }
+    }
+
+    const schedulePlanFilter = document.getElementById('schedule-plan-filter');
+    if (schedulePlanFilter) {
+        schedulePlanFilter.addEventListener('change', function () {
+            tablePages.schedules = 1;
+            loadSchedules();
+        });
+    }
+
+    const memberPlanFilter = document.getElementById('member-plan-filter');
+    if (memberPlanFilter) {
+        memberPlanFilter.addEventListener('change', function () {
+            tablePages.members = 1;
+            loadMembers();
+        });
     }
 
     /* ===== form modal ===== */
