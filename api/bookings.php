@@ -144,7 +144,6 @@ endpoint(function () {
                   WHERE m.user_id = ?
                     AND m.status = 'active'
                     AND m.end_date >= CURDATE()
-                    AND p.name = 'Premium'
                   LIMIT 1"
             );
             $stmt->execute([(int) $user['id']]);
