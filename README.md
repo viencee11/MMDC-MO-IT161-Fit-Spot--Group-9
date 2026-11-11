@@ -33,7 +33,7 @@ The site must be **served over HTTP** (the pages talk to a PHP API; opening `ind
 # 1. Open the XAMPP Control Panel and start Apache and MySQL.
 
 # 2. Open PowerShell and go to the project folder:
-cd C:\FitSpot
+cd C:\MMDC-MO-IT161-Fit-Spot--Group-9
 
 # 3. Import the database once. If the MySQL command is not in PATH,
 #    use the full XAMPP path:
@@ -78,6 +78,12 @@ Replace `192.168.1.25` with the actual IPv4 address shown on the computer. If Wi
 - Success and error feedback appears through side toast notifications instead of inline alert banners
 - Monitor available slots to avoid overbooking
 - Notification bell shows members confirmed bookings and alerts administrators about new bookings and schedules with near-empty or fully booked slots
+
+### Schedule Visibility and Slot Availability
+
+- The member Fitness Classes page shows only schedules dated today or later. Past schedules remain visible to administrators for record and management purposes but cannot be booked by members.
+- To make a class such as Pilates available to members, create a schedule with today's date or a future date and ensure it is not cancelled.
+- Remaining slots are calculated from the schedule capacity minus active (`pending` or `confirmed`) bookings. Cancelling a booking immediately frees that slot, while fully booked schedules show zero remaining slots and cannot accept new bookings.
 
 ## Benefits
 
