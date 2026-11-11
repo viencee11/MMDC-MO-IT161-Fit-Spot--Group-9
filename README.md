@@ -83,6 +83,8 @@ Replace `192.168.1.25` with the actual IPv4 address shown on the computer. If Wi
 
 - The member Fitness Classes page shows only schedules dated today or later. Past schedules remain visible to administrators for record and management purposes but cannot be booked by members.
 - To make a class such as Pilates available to members, create a schedule with today's date or a future date and ensure it is not cancelled.
+- Boxing is a Premium-only group class. Basic members do not see it in the member class list, and direct booking attempts are rejected by the API.
+- Administrators choose a schedule membership category: Basic or Premium. Members only see and book schedules matching their active membership category.
 - Remaining slots are calculated from the schedule capacity minus active (`pending` or `confirmed`) bookings. Cancelling a booking immediately frees that slot, while fully booked schedules show zero remaining slots and cannot accept new bookings.
 
 ## Benefits
