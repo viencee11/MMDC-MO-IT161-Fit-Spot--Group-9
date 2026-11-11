@@ -126,6 +126,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     let profile = null;
     let myBookings = [];
     let classSchedules = [];
+    let classesRefreshTimer = null;
+    let classFiltersBound = false;
     const tablePages = {};
 
     function renderPaginatedTable(key, tbody, items, colspan, emptyMessage, renderer) {
@@ -201,8 +203,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 '</h3><span class="badge ' + slot.badge_color + '">' + esc(slot.badge_label) +
                 '</span></div><p class="class-desc">' + esc(slot.description || '') +
                 '</p><p class="class-schedule">' + esc(slot.schedule) +
-                '</p><div class="slot-cell"><span class="slot-text">' + slot.booked + ' of ' +
-                slot.capacity + ' slots booked</span><div class="slot-bar' +
+                '</p><div class="slot-cell"><span class="slot-text">' + slot.remaining +
+                ' slots available (' + slot.booked + ' of ' + slot.capacity +
+                ' booked)</span><div class="slot-bar' +
                 (slot.remaining <= 0 ? ' is-full' : '') + '"><span style="width: ' +
                 (slot.capacity > 0 ? Math.round(slot.booked / slot.capacity * 100) : 0) +
                 '%;"></span></div></div>';
@@ -321,8 +324,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             renderClassSchedules();
             const search = document.getElementById('class-search');
             const filter = document.getElementById('class-filter');
-            if (search) search.addEventListener('input', renderClassSchedules);
-            if (filter) filter.addEventListener('change', renderClassSchedules);
+            if (!classFiltersBound) {
+                if (search) search.addEventListener('input', renderClassSchedules);
+                if (filter) filter.addEventListener('change', renderClassSchedules);
+                classFiltersBound = true;
+            }
+            if (classesRefreshTimer === null) {
+                classesRefreshTimer = window.setInterval(loadClassesPage, 10000);
+            }
         } catch (error) {
             toast.error(friendlyMessage(error, 'Unable to load classes.', SERVER_HINT));
         }
@@ -468,6 +477,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await apiCall('POST', 'bookings.php', {
                     schedule_id: Number(button.dataset.book)
                 });
+                await loadClassesPage();
             } catch (error) {
                 button.disabled = false;
                 toast.error(friendlyMessage(error, 'Something went wrong while booking your class.'));
