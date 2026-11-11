@@ -67,14 +67,16 @@ endpoint(function () {
                     SELECT COUNT(*) FROM bookings b
                      WHERE b.schedule_id = s.id
                        AND b.status IN ('pending', 'confirmed')
-                ) BETWEEN 1 AND 3
+                ) BETWEEN 0 AND 3
               ORDER BY s.schedule_date, s.start_time
               LIMIT 10"
         );
         foreach ($stmt->fetchAll() as $row) {
             $notifications[] = [
                 'type' => 'low-slots',
-                'message' => $row['class_name'] . ' has only ' . $row['remaining'] . ' slot(s) left.',
+                'message' => (int) $row['remaining'] === 0
+                    ? $row['class_name'] . ' is fully booked.'
+                    : $row['class_name'] . ' has only ' . $row['remaining'] . ' slot(s) left.',
                 'detail' => schedule_label($row['schedule_date'], $row['start_time'], $row['end_time']),
             ];
         }
