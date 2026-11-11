@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         try {
             const data = await apiCall('GET', 'schedules.php?all=1');
-            renderTablePage('schedules', tbody, data.schedules, 5, function (slot) {
+            renderTablePage('schedules', tbody, data.schedules, 6, function (slot) {
                 return '<tr data-id="' + slot.schedule_id + '">' +
                     '<td>' + esc(slot.class_name) + '</td>' +
                     '<td>' + esc(slot.schedule) + '</td>' +
@@ -281,6 +281,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             '<span style="width: ' + slot.percent + '%;"></span>' +
                         '</div>' +
                     '</td>' +
+                    '<td>' + esc(slot.required_plan) + '</td>' +
                     '<td class="status-cell"><span class="badge ' + slot.status_color + '">' + esc(slot.status_label) + '</span></td>' +
                     '<td>' +
                         '<button type="button" class="btn-sm ' + (slot.status === 'open' ? 'btn-delete' : 'btn-confirm') + '" data-toggle-schedule>' +
@@ -294,7 +295,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 schedulesRefreshTimer = window.setInterval(loadSchedules, 10000);
             }
         } catch (error) {
-            errorRow(tbody, 5, friendlyMessage(error, 'Unable to load schedules.', SERVER_HINT));
+            errorRow(tbody, 6, friendlyMessage(error, 'Unable to load schedules.', SERVER_HINT));
         }
     }
 
@@ -387,7 +388,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 { key: 'schedule_date', label: 'Date', type: 'date' },
                 { key: 'start_time', label: 'Start Time', type: 'time' },
                 { key: 'end_time', label: 'End Time', type: 'time' },
-                { key: 'capacity', label: 'Slots', type: 'number', placeholder: 'e.g. 10' }
+                { key: 'capacity', label: 'Slots', type: 'number', placeholder: 'e.g. 10' },
+                { key: 'required_plan', label: 'Membership Category', type: 'select',
+                    options: [
+                        { value: 'Basic', label: 'Basic' },
+                        { value: 'Premium', label: 'Premium' }
+                    ] }
             ]
         },
         profile: {
@@ -484,7 +490,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (field.type === 'select') {
                 input = document.createElement('select');
-                (selectOptions || []).forEach(function (optionData) {
+                (field.options || selectOptions || []).forEach(function (optionData) {
                     const option = document.createElement('option');
                     option.value = optionData.value;
                     option.textContent = optionData.label;
@@ -589,7 +595,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                     schedule_date: values.schedule_date,
                     start_time: values.start_time,
                     end_time: values.end_time,
-                    capacity: values.capacity
+                    capacity: values.capacity,
+                    required_plan: values.required_plan
                 });
                 toast.success('Saved successfully.');
                 closeModal();
