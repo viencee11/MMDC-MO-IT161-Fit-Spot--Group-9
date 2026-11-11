@@ -55,7 +55,7 @@ endpoint(function () {
             fail('Booking id is required.');
         }
 
-        $stmt = db()->prepare('SELECT id, status FROM bookings WHERE id = ? AND user_id = ?');
+        $stmt = db()->prepare('SELECT id, schedule_id, status FROM bookings WHERE id = ? AND user_id = ?');
         $stmt->execute([$id, (int) $user['id']]);
         $booking = $stmt->fetch();
         if (!$booking) {
@@ -69,7 +69,24 @@ endpoint(function () {
             "UPDATE bookings SET status = 'cancelled', cancelled_at = NOW() WHERE id = ?"
         )->execute([$id]);
 
-        json_out(['id' => $id, 'status' => 'cancelled']);
+        $stmt = db()->prepare(
+            "SELECT s.capacity - (
+                    SELECT COUNT(*) FROM bookings active_booking
+                     WHERE active_booking.schedule_id = s.id
+                       AND active_booking.status IN ('pending', 'confirmed')
+                ) AS remaining
+               FROM class_schedules s
+              WHERE s.id = ?"
+        );
+        $stmt->execute([(int) $booking['schedule_id']]);
+        $remaining = $stmt->fetchColumn();
+
+        json_out([
+            'id' => $id,
+            'schedule_id' => (int) $booking['schedule_id'],
+            'status' => 'cancelled',
+            'remaining' => max(0, (int) $remaining),
+        ]);
     }
 
     /* ---- book a slot ---- */
